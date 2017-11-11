@@ -43,7 +43,7 @@ public class LottoSimulator {
 
 	private static Set<Integer> userNums = new HashSet<>();
 	private static Set<Integer> lottoNums = new HashSet<>();
-	private static final int MAX_LOTTO_NUMBER =  12; // 49;
+	private static final int MAX_LOTTO_NUMBER =  20; // 49;
 	private static final int MIN_LOTTO_NUMBER = 1;
 	private static final int NUMS_TO_DRAW = 6;
 
@@ -51,6 +51,7 @@ public class LottoSimulator {
 
 		display("Welcome to the LOTTO simulator! Please enter 6 numbers.");
 		userNums = get6UserNumbers();
+		display("Size of userNums: " + userNums.size());
 		lottoNums = draw6LottoNumbers();
 					display("Before matching: " + LottoSimulator.info());
 		
@@ -92,7 +93,7 @@ public class LottoSimulator {
 		} while (count <= NUMS_TO_DRAW);
 
 		sc.close();
-		return sixNums;
+		return userNums;
 	}
 
 	/**
@@ -145,7 +146,7 @@ public class LottoSimulator {
 	}
 
 	public static String info() {
-		return "LottoSimulator:\nLotto numbers are " + lottoNums.toString() + "\nUser numbers are " + userNums.toString();
+		return "LottoSimulator:\nLotto numbers are " + lottoNums.toString() + "\nUser numbers are  " + userNums.toString();
 	}
 
 }
