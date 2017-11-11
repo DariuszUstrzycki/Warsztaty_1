@@ -24,40 +24,38 @@ public class GuessMyNumber {
 		int min = 1;
 
 		Random generator = new Random();
-		int numToGuess = generator.nextInt(max) + min; 
+		int secretNumber = generator.nextInt(max) + min; 
 
 		do {
-			// read data
-			int number = readInt(sc, min, max);
+			int guess = readInt(sc, min, max);
 
-			// interpret data
-			if (number > numToGuess) {
-				displayMessage("Too much!");
-			} else if (number < numToGuess) {
-				displayMessage("Too little!");
+			if (guess > secretNumber) {
+				display("Too much!");
+			} else if (guess < secretNumber) {
+				display("Too little!");
 			} else {
-				displayMessage("You got it!");
+				display("You got it!");
 				done = true;
 			}
 
 		} while (!done);
+		
+		sc.close();
 	}
 
 	private static int readInt(Scanner sc, int min, int max) {
 
-		int num = 0;
-		System.out.println("Guess my number from " + min + " to " + max + ":");
+		display("Guess my number from " + min + " to " + max + ":");
 
 		while (!sc.hasNextInt()) {
-			System.out.println("This is not a number! Please try again");
+			display("This is not a number! Please try again");
 			sc.next(); // clear scanner
 		}
 
-		num = sc.nextInt();
-		return num;
+		return sc.nextInt();
 	}
 
-	private static void displayMessage(String message) {
+	private static void display(String message) {
 		System.out.println(message);
 	}
 }
