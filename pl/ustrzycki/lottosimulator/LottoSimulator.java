@@ -86,7 +86,7 @@ public class LottoSimulator {
 					readAgain = false;
 				}
 			}
-			sixNums.add(userInput);
+			userNums.add(userInput);
 			count++;
 
 		} while (count <= NUMS_TO_DRAW);
