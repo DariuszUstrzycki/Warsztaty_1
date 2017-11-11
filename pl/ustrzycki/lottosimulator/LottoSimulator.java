@@ -13,6 +13,7 @@ Napisz program, który:
 5.po wprowadzeniu 6 liczb, posortuje je rosnąco i wyświetli na ekranie,
 6.wylosuje 6 liczb z zakresu i wyświetli je na ekranie,
 DONE
+
 7.poinformuje gracza, czy trafił przynajmniej "trójkę".
 
 8.Aby wylosować 6 liczb z zakresu 1-49 bez powtórzeń możemy utworzyć tablicę z wartościami 1-49, wymieszać jej zawartość i pobrać pierwsze 6 elementów.
@@ -34,66 +35,68 @@ package pl.ustrzycki.lottosimulator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
 
 public class LottoSimulator {
-	
-	
 
-	private static List<Integer> listOfNums = new ArrayList<>();
-
+	private static List<Integer> userNums = new ArrayList<>();
+	private static List<Integer> lottoNums = new ArrayList<>();
+	private static final int MAX_LOTTO_NUMBER = 49;
+	private static final int MIN_LOTTO_NUMBER = 1;
+	private static final int NUMS_TO_DRAW = 6;
 
 	public static void main(String[] args) {
-		
-		LottoSimulator simulator = new LottoSimulator();
-		Scanner sc = new Scanner(System.in);
-		boolean done = false;
-		int max = 49;
-		int min = 1;
 
-		Random generator = new Random();
-		
-		display("Welcome to the LOTTO simulator! You will have to choose 6 numbers.");
-		
-		int draws = 0;
+		display("Welcome to the LOTTO simulator! Please enter 6 numbers.");
+		userNums = get6UserNumbers();
+		lottoNums = draw6LottoNumbers();
+		display(LottoSimulator.info());
+
+	}
+
+	/**
+	 * Reades 6 user numbers and puts them in a List
+	 */
+	private static List<Integer> get6UserNumbers() {
+		Scanner sc = new Scanner(System.in);
+		List<Integer> sixNums = new LinkedList<>();
+		int count = 1;
 		do {
-			
-			boolean repeat = true;
-			int userNumber = -1;
-			while (repeat) {
-				userNumber = readInt(sc, min, max);
-				if (!isNumberCorrect(userNumber)){
+			boolean readAgain = true;
+			int userInput = MIN_LOTTO_NUMBER - 1; // invalid lottery number
+
+			while (readAgain) {
+				userInput = readInt(sc);
+				if (!isValidNumber(userInput)) {
 					display("Your number is not in the range 1-49 or has already been entered!");
-					repeat = true;
+					readAgain = true;
 				} else {
-					repeat = false;	
+					readAgain = false;
 				}
 			}
-			listOfNums.add(userNumber);
-			draws++;
+			sixNums.add(userInput);
+			count++;
 
-		} while (draws < 6);
-		
-		Collections.sort(listOfNums);
-		display("Your numbers are " + listOfNums.toString());
-		drawLottonumbers();
-		display( "Lotto numbers are " + drawLottonumbers().toString());
-		
-		
+		} while (count <= NUMS_TO_DRAW);
 
+		sc.close();
+
+		return sixNums;
 	}
 
-	private static boolean isNumberCorrect(int number) {
-		return !listOfNums.contains(number) && (number <= 49 && number > 0);
-
-	}
-
-	private static int readInt(Scanner sc, int min, int max) {
+	/**
+	 * utility method reading numbers from the correct range entered by the user
+	 * 
+	 * @return
+	 */
+	private static int readInt(Scanner sc) {
 
 		int num = 0;
-		System.out.println("Enter a number int the range " + min + " to " + max + ":");
+		System.out.println("Enter a number int the range " + MIN_LOTTO_NUMBER + " to " + MAX_LOTTO_NUMBER + ":");
 
 		while (!sc.hasNextInt()) {
 			System.out.println("This is not a number! Please try again");
@@ -101,32 +104,42 @@ public class LottoSimulator {
 		}
 
 		num = sc.nextInt();
+
 		return num;
 	}
-	
-	private static void display(String message){
-		System.out.println(message);		
-	}
-	
-	private static List<Integer> drawLottonumbers() {
-		
-		Integer[] arr_1_49 = new Integer[49];
-		for (int i = 0; i < arr_1_49.length; i++) {
-			arr_1_49[i] = Integer.valueOf(i+1);			
+
+	private static List<Integer> lottoPool() {
+
+		List<Integer> lottoPool = new ArrayList<>();
+
+		for (int i = 0; i < MAX_LOTTO_NUMBER; i++) {
+			lottoPool.add(MIN_LOTTO_NUMBER + i);
 		}
-		System.out.println("Before shuffling: " + Arrays.toString(arr_1_49));
-		Collections.shuffle(Arrays.asList(arr_1_49)); // shuffle willnot work wit int[] althoughcode will compile
-		
-		//System.out.println(Arrays.toString(a1));
-		System.out.println("After shuffling: " + Arrays.toString(arr_1_49));
-		
-		;
-		List<Integer> lotto = Arrays.asList(Arrays.copyOf(arr_1_49, 6));
-		
-		//= Arrays.asList(arr_1_49);
-		
-		return lotto;
-		
+
+		display("pool before shuffling: " + lottoPool.toString());
+		Collections.shuffle(lottoPool);
+		display("pool after shuffling: " + lottoPool.toString());
+
+		return lottoPool;
+	}
+
+	private static List<Integer> draw6LottoNumbers() {
+		// display("6 lotto numbers: " + lottoPool().subList(MIN_LOTTO_NUMBER -
+		// 1, NUMS_TO_DRAW).toString());
+		return lottoPool().subList(MIN_LOTTO_NUMBER - 1, NUMS_TO_DRAW);
+	}
+
+	private static boolean isValidNumber(int possibleDuplicate) {
+		return !userNums.contains(possibleDuplicate)
+				&& (possibleDuplicate <= MAX_LOTTO_NUMBER && possibleDuplicate >= MIN_LOTTO_NUMBER);
+	}
+
+	private static void display(String message) {
+		System.out.println(message);
+	}
+
+	public static String info() {
+		return "LottoSimulator:\n Lotto numbers are " + lottoNums.toString() + ".\nUser numbers are " + userNums.toString();
 	}
 
 }
