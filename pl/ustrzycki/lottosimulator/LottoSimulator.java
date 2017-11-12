@@ -42,94 +42,90 @@ import java.util.TreeSet;
 
 public class LottoSimulator {
 
-	private static Set<Integer> userNums = new HashSet<>();
+	private static Set<Integer> playerNums = new HashSet<>();
 	private static Set<Integer> lottoNums = new HashSet<>();
 	private static final int MAX_LOTTO_NUMBER = 49;
 	private static final int MIN_LOTTO_NUMBER = 1;
 	private static final int NUMS_TO_DRAW = 6;
 
 	public static void main(String[] args) {
-
 		display("Welcome to the LOTTO simulator! Please enter 6 numbers.");
-		userNums = get6UserNumbers();
+		playerNums = get6playerNumbers();
 		lottoNums = draw6LottoNumbers();
-		
 		display(getDrawMessage());
-		int noOfMatches = matches(userNums, lottoNums);
-		display(getMatchesMessage(noOfMatches));
 
+		int noOfMatches = matches(playerNums, lottoNums);
+		display(getMatchesMessage(noOfMatches));
 	}
-	
-	private static Set<Integer> sortAscending(Set numbers) {
-		TreeSet<Integer> sorted = new TreeSet();
+
+	private static Set<Integer> sortAscending(Set<Integer> numbers) {
+		TreeSet<Integer> sorted = new TreeSet<>();
 		sorted.addAll(numbers);
 		return sorted;
 	}
 
 	private static String getDrawMessage() {
-		
-		return "\nLOTTO SIMULATOR RESULTS:\nLotto numbers are " + sortAscending(lottoNums).toString() + "\nUser numbers are  "
-				+ sortAscending(userNums).toString() + "\n";
+		return "\nLOTTO SIMULATOR RESULTS:\nLotto numbers are " + sortAscending(lottoNums).toString()
+				+ "\nplayer numbers are  " + sortAscending(playerNums).toString() + "\n";
 	}
 
 	private static String getMatchesMessage(int number) {
 		String matches = "";
-
 		switch (number) {
 		case 0:
 			matches = "no number.";
 			break;
 		case 1:
-			matches = "1 number: " + sortAscending(userNums).toString();
+			matches = "1 number: " + sortAscending(playerNums).toString();
 			break;
 		default:
-			matches = number + " numbers: " + sortAscending(userNums).toString();
-
+			matches = number + " numbers: " + sortAscending(playerNums).toString();
 		}
 		return "You have guessed " + matches;
 	}
 
-	private static int matches(Set<Integer> userNums, Set<Integer> lottoNums) {
-		userNums.retainAll(lottoNums);
-		return userNums.size();
+	/**
+	 * @return the common part between the lotto numbers and player numbers
+	 */
+	private static int matches(Set<Integer> playerNums, Set<Integer> lottoNums) {
+		playerNums.retainAll(lottoNums);
+		return playerNums.size();
 	}
 
 	/**
-	 * Reades 6 user numbers and puts them in a List
+	 * Reads 6 player numbers and puts them in a List
 	 */
-	private static Set<Integer> get6UserNumbers() {
+	private static Set<Integer> get6playerNumbers() {
 		Scanner sc = new Scanner(System.in);
-		Set<Integer> sixNums = new HashSet<>();
 		int count = 1;
+
 		do {
 			boolean readAgain = true;
-			Integer userInput = MIN_LOTTO_NUMBER - 1; // invalid lottery number
+			Integer playerInput = MIN_LOTTO_NUMBER - 1; // invalid lottery
+														// number
 
 			while (readAgain) {
-				userInput = readInt(sc);
-				if (!isValidNumber(userInput)) {
+				playerInput = readInt(sc);
+				if (!isValidNumber(playerInput)) {
 					display("Your number is not in the range 1-49 or has already been entered!");
 					readAgain = true;
 				} else {
 					readAgain = false;
 				}
 			}
-			userNums.add(userInput);
+			playerNums.add(playerInput);
 			count++;
 
 		} while (count <= NUMS_TO_DRAW);
 
 		sc.close();
-		return userNums;
+		return playerNums;
 	}
 
 	/**
-	 * utility method reading numbers from the correct range entered by the user
-	 * 
-	 * @return
+	 * Reads a number entered by the player
 	 */
 	private static int readInt(Scanner sc) {
-
 		int num = 0;
 		System.out.println("Enter a number int the range " + MIN_LOTTO_NUMBER + " to " + MAX_LOTTO_NUMBER + ":");
 
@@ -139,12 +135,13 @@ public class LottoSimulator {
 		}
 
 		num = sc.nextInt();
-
 		return num;
 	}
 
+	/**
+	 * Generates a pool of numbers from 1-49 and shuffles them
+	 */
 	private static List<Integer> lottoPool() {
-
 		List<Integer> lottoPool = new ArrayList<>();
 
 		for (int i = 0; i < MAX_LOTTO_NUMBER; i++) {
@@ -152,17 +149,25 @@ public class LottoSimulator {
 		}
 
 		Collections.shuffle(lottoPool);
-
 		return lottoPool;
 	}
 
+	/**
+	 * @return first six numbers from the pool of shuffled numbers in the range
+	 *         of 1-49
+	 */
 	private static Set<Integer> draw6LottoNumbers() {
-
 		return new HashSet<Integer>(lottoPool().subList(MIN_LOTTO_NUMBER - 1, NUMS_TO_DRAW));
 	}
 
+	/**
+	 * @param possibleDuplicate
+	 *            number entered by the use, not yet added to the List
+	 * @return true if the possibleDuplicate is in the right range and not
+	 *         already in the List
+	 */
 	private static boolean isValidNumber(Integer possibleDuplicate) {
-		return !userNums.contains(possibleDuplicate)
+		return !playerNums.contains(possibleDuplicate)
 				&& (possibleDuplicate <= MAX_LOTTO_NUMBER && possibleDuplicate >= MIN_LOTTO_NUMBER);
 	}
 
