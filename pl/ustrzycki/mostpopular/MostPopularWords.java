@@ -5,8 +5,9 @@
 skip (3.Wywołaj pobieranie dla wybranych serwisów internetowych.)
 4.Wczytaj utworzony plik popular_words.txt 
 5. Utwórz tablicę elementów wykluczonych np. i, lub , ewentualnie pomiń wszystkie elementy 3-znakowe.
-6.utwórz plik most_popular_words.txt, który zawierać będzie 20 najbardziej popularnych słów.
-skip (6. )
+6.utwórz plik most_popular_words.txt, który zawierać będzie n najbardziej popularnych słów.
+
+NOTES: // dla https://www.wp.pl/ - <a> wth attribute title??
 */
 
 package pl.ustrzycki.mostpopular;
@@ -40,28 +41,35 @@ import org.jsoup.select.Elements;
 
 public class MostPopularWords {
 
+	public static final String ONET_URL = "http://www.onet.pl/";
+	public static final String INTERIA_URL = "http://www.onet.pl/";
+
 	public static void main(String[] args) {
 
-		// dla https://www.wp.pl/ - <a> wth attribute title?
-		String onetHeadlines = getWebpageHeadlines("http://www.onet.pl/", "span.title");
-		String interiaHeadlines = getWebpageHeadlines("http://www.interia.pl/", "li.news-li a.news-a");
-		String allHeadlines = "ONET: " + onetHeadlines + "\nINTERIA: \n\n" + interiaHeadlines;
+		// get headlines and put them in a a string
+		String onetHeadlines = getWebpageHeadlines(ONET_URL, "span.title");
+		String interiaHeadlines = getWebpageHeadlines(INTERIA_URL, "li.news-li a.news-a");
+		String combinedHeadlines = "ONET: " + onetHeadlines + "\nINTERIA: \n\n" + interiaHeadlines;
 
-		// display(allHeadlines);
-		// display("\n AFTER CLEARING !!!\n");
-
+		// format the headlines
 		String toRemove = " #|[],;-:\\.!?\"\\\r\\\t///";
-		String clearedHeadlines = removeNonWordChars(allHeadlines, toRemove);
+		String clearedHeadlines = removeNonWordChars(combinedHeadlines, toRemove);
 		String wordsList = splitIntoWords(clearedHeadlines);
+
+		// write to a file, read from the file
 		writeDataToFile(wordsList, "popular_words.txt");
 		wordsList = readFromFile("popular_words.txt");
+
+		// filter the words and work out n most popular words
 		Map<String, Integer> wordsMap = frequency(wordsList);
 		int wordsToDisplay = 20;
+		// save to a new file
 		writeDataToFile(wordsMap, "most_popular_words.txt", wordsToDisplay);
 
+		// ---------------for testing only:--------------------------
 		// displayMapKeyAscend(wordsMap);
 		// displayMapValueDesc(wordsMap, 20);
-		
+
 	}
 
 	private static String splitIntoWords(String text) {
@@ -77,11 +85,11 @@ public class MostPopularWords {
 
 	private static boolean censor(String str) {
 
-		str = str.toLowerCase();
 		String[] forbiddenWords = { "się", "czy", "nie", "nas", "onet", "interia", "jak", "jest", "ponad", "dla", "bez",
 				"dziś", "raz", "dwóch", "trzech", "pod", "może", "nawet", "nad", "będzie" };
 		Set<String> forbiddenSet = new HashSet<>(Arrays.asList(forbiddenWords));
 
+		str = str.toLowerCase();
 		boolean censored = false;
 
 		if (str.length() < 3)
@@ -97,9 +105,9 @@ public class MostPopularWords {
 	}
 
 	/**
-	 * Reads all spans with title class from a webpage
+	 * Reads all spans with 'title' class from a webpage
 	 * 
-	 * @return string with collected data
+	 * @return string with filtered data
 	 */
 	private static String getWebpageHeadlines(String url, String selection) {
 
@@ -123,9 +131,7 @@ public class MostPopularWords {
 		StringTokenizer tokenizer;
 
 		if (keepNewLines)
-			tokenizer = new StringTokenizer(raw, toRemove + "\\\n", false); // false
-																			// -
-																			// dont
+			tokenizer = new StringTokenizer(raw, toRemove + "\\\n", false); // dont
 																			// include
 																			// delimiters
 		else
@@ -133,8 +139,7 @@ public class MostPopularWords {
 
 		StringBuilder builder = new StringBuilder();
 		while (tokenizer.hasMoreTokens())
-			builder.append(tokenizer.nextToken() + " "); // \\\n - this removes
-															// \n !!!
+			builder.append(tokenizer.nextToken() + " ");
 
 		return builder.toString();
 	}
@@ -153,7 +158,8 @@ public class MostPopularWords {
 		while (tokenizer.hasMoreTokens()) {
 			String word = tokenizer.nextToken();
 
-			if (censor(word)) // to see censored words change to !censor(word
+			if (censor(word)) // to see censored words just change to
+								// (!censor(word))
 				continue;
 
 			if (ignoreCase)
@@ -172,7 +178,7 @@ public class MostPopularWords {
 
 	private static void writeDataToFile(String str, String fileName) {
 
-		try (FileWriter out = new FileWriter(fileName, false)) { //zastapi 
+		try (FileWriter out = new FileWriter(fileName, false)) { // zastapi
 			out.append(str);
 		} catch (IOException ex) {
 			System.out.println("Can't write to the file!");
@@ -191,7 +197,7 @@ public class MostPopularWords {
 			}
 
 		} catch (FileNotFoundException ex) {
-			System.out.println("the file is unavailable!");
+			System.out.println("The file is unavailable!");
 			ex.printStackTrace();
 		} catch (IOException e) {
 			System.out.println("Can't read from the file!");
@@ -199,10 +205,6 @@ public class MostPopularWords {
 		}
 
 		return builder.toString();
-	}
-
-	private static Map<String, Integer> selectMostPopular(String popularWords, int wordLimit) {
-		return null;
 	}
 
 	private static void displayMapKeyAscend(Map<String, Integer> map) {
@@ -233,23 +235,24 @@ public class MostPopularWords {
 	}
 
 	private static void writeDataToFile(Map<String, Integer> unsortMap, String fileName, int limit) {
-		
+
 		boolean ascending = false;
 		Map<String, Integer> sortedMapAsc = sortByComparator(unsortMap, ascending);
 		Set<String> keys = sortedMapAsc.keySet();
-		String header = String.format(("%nMost popular words in onet.pl and wp.pl headlines:%nWord\t\t\tFrequency%n"));
-		String limited = header;
-		
-		try (FileWriter out = new FileWriter(fileName, false)) { // zastapi 
-			
+		// String header = String.format(("%nMost popular words in onet.pl and
+		// wp.pl headlines:%nWord\t\t\tFrequency%n"));
+		// String limited = header;
+
+		try (FileWriter out = new FileWriter(fileName, false)) { // zastapi
+
 			int loop = 0;
 			for (String key : keys) {
-				out.append( String.format("%-20s%12s%n", key, sortedMapAsc.get(key)) );
-				
+				out.append(String.format("%-20s%12s%n", key, sortedMapAsc.get(key)));
+
 				if (++loop >= limit)
 					break;
 			}
-			
+
 		} catch (IOException ex) {
 			System.out.println("Can't write to the file!");
 			ex.printStackTrace();
