@@ -11,7 +11,6 @@ skip (6. Utwórz tablicę elementów wykluczonych np. i, lub , ewentualnie pomi�
 package pl.ustrzycki.mostpopular;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -27,17 +26,23 @@ import org.jsoup.select.Elements;
 public class MostPopularWords {
 
 	public static void main(String[] args) {
-
+		// for testing:
 		/*String titles = "Krowa, zjadła; krowa\n"
 		+ " I widziała.go-go \\\"krowa: krowa- i\n"
 		+ "bulion? ,zupa\\\" zupa!";*/
 		
-		String titles = getTitlesFromWeb("onet.pl"); 
-		display(titles);
-		display("\nTu koniec!!!\n\n\n\n\n");
-		//String clearedTitles = prepareSplit(titles);
-		/*	//display(clearedTitles);
-		Map<String,Integer> words = frequency(clearedTitles);
+		
+		//dla https://www.wp.pl/ - <a> wth attribute title?
+		String onetHeadlines = getWebpageHeadlines("http://www.onet.pl/", "span.title");
+		String interiaHeadlines = getWebpageHeadlines("http://www.interia.pl/", "li.news-li a.news-a"); 
+		String allHeadlines = "ONET: " + onetHeadlines + "\nINTERIA: \n\n" + interiaHeadlines;
+			display(allHeadlines);
+			display("\n AFTER CLEARING !!!\n");
+		String toRemove = " ,;-:\\.!?\"\\\r\\\t";
+		String clearedHeadlines = removeNonWordChars(allHeadlines, toRemove);
+		display(clearedHeadlines);
+		// done --------------------
+		/*Map<String,Integer> words = frequency(clearedTitles);
 			//displayMap(words);
 			//-----------------------------
 		
@@ -52,16 +57,15 @@ public class MostPopularWords {
 	 * Reads all spans with title class from a webpage
 	 * @return string with collected data
 	 */
-	private static String getTitlesFromWeb(String url) {
+	private static String getWebpageHeadlines(String url, String selection) {
 
-		Connection connect = Jsoup.connect("http://www.onet.pl/");
+		Connection connect = Jsoup.connect(url);
 		StringBuilder builder = new StringBuilder();
 		try {
 			Document document = connect.get();
-			Elements links = document.select("span.title");
+			Elements links = document.select(selection);
 			for (Element elem : links) {
 				builder.append(elem.text() + "\n");
-				//System.out.println(elem.tex + t());
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -69,10 +73,16 @@ public class MostPopularWords {
 		return builder.toString();
 	}
 	
-	private static String prepareSplit(String raw) {
-		System.out.println("this is raw: " + raw);
+	private static String removeNonWordChars(String raw, String toRemove) {
 		
-		StringTokenizer tokenizer = new StringTokenizer(raw, " ,;-:\\.!?\\\n\"\\\r\\\t", false);
+		boolean keepNewLines = false;
+		StringTokenizer tokenizer;
+		
+		if(keepNewLines)
+			tokenizer = new StringTokenizer(raw, toRemove + "\\\n", false);  // false - dont include delimiters
+		else
+			tokenizer = new StringTokenizer(raw, toRemove, false); 
+		 
 		StringBuilder builder = new StringBuilder();
 		while(tokenizer.hasMoreTokens())
 			builder.append(tokenizer.nextToken().toLowerCase() + " "); //  \\\n - this removes \n !!!
