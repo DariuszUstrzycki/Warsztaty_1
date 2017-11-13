@@ -3,14 +3,19 @@
 1.Wyszukaj w popularnych serwisach internetowych nagłówków artykułów, 
 2.Zapisz pojedyncze słowa w nich występujące do pliku o nazwie popular_words.txt. 
 skip (3.Wywołaj pobieranie dla wybranych serwisów internetowych.)
-4.Wczytaj utworzony plik popular_words.txt i na jego podstawie 
-5.utwórz plik most_popular_words.txt, który zawierać będzie 10 najbardziej popularnych słów.
-skip (6. Utwórz tablicę elementów wykluczonych np. i, lub , ewentualnie pomiń wszystkie elementy 3-znakowe.)
+4.Wczytaj utworzony plik popular_words.txt 
+5. Utwórz tablicę elementów wykluczonych np. i, lub , ewentualnie pomiń wszystkie elementy 3-znakowe.
+6.utwórz plik most_popular_words.txt, który zawierać będzie 20 najbardziej popularnych słów.
+skip (6. )
 */
 
 package pl.ustrzycki.mostpopular;
 
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -21,6 +26,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
@@ -35,42 +41,45 @@ import org.jsoup.select.Elements;
 public class MostPopularWords {
 
 	public static void main(String[] args) {
-		// for testing:
-		/*
-		 * String titles = "Krowa, zjadła; krowa\n" +
-		 * " I widziała.go-go \\\"krowa: krowa- i\n" +
-		 * "bulion? ,zupa\\\" zupa!";
-		 */
 
 		// dla https://www.wp.pl/ - <a> wth attribute title?
 		String onetHeadlines = getWebpageHeadlines("http://www.onet.pl/", "span.title");
 		String interiaHeadlines = getWebpageHeadlines("http://www.interia.pl/", "li.news-li a.news-a");
 		String allHeadlines = "ONET: " + onetHeadlines + "\nINTERIA: \n\n" + interiaHeadlines;
+
 		// display(allHeadlines);
 		// display("\n AFTER CLEARING !!!\n");
+
 		String toRemove = " #|[],;-:\\.!?\"\\\r\\\t///";
 		String clearedHeadlines = removeNonWordChars(allHeadlines, toRemove);
-		display(clearedHeadlines);
+		String wordsList = splitIntoWords(clearedHeadlines);
+		writeDataToFile(wordsList, "popular_words.txt");
+		wordsList = readFromFile("popular_words.txt");
+		Map<String, Integer> wordsMap = frequency(wordsList);
+		int wordsToDisplay = 20;
+		writeDataToFile(wordsMap, "most_popular_words.txt", wordsToDisplay);
 
-		// done --------------------
-		Map<String, Integer> words = frequency(clearedHeadlines);
-		//displayMapKeyAscend(words);
+		// displayMapKeyAscend(wordsMap);
+		// displayMapValueDesc(wordsMap, 20);
+		
+	}
 
-		displayMapValueDesc(words, 20);
-		// -----------------------------
-		/*
-		 * writeDataToFile(words, "popular_words.txt"); String popularWords =
-		 * readFromFile("popular_words.txt"); Map<String,Integer>
-		 * mostPopularWords = selectMostPopular(popularWords, 10);
-		 * writeDataToFile(mostPopularWords, "most_popular_words.txt");
-		 */
+	private static String splitIntoWords(String text) {
+
+		StringTokenizer tokenizer = new StringTokenizer(text, " ");
+		StringBuilder builder = new StringBuilder();
+		while (tokenizer.hasMoreTokens()) {
+			builder.append(tokenizer.nextToken() + "\n");
+		}
+
+		return builder.toString();
 	}
 
 	private static boolean censor(String str) {
 
 		str = str.toLowerCase();
 		String[] forbiddenWords = { "się", "czy", "nie", "nas", "onet", "interia", "jak", "jest", "ponad", "dla", "bez",
-				"dziś", "raz", "dwóch", "trzech", "pod", "może", "nawet", "nad", "będzie"};
+				"dziś", "raz", "dwóch", "trzech", "pod", "może", "nawet", "nad", "będzie" };
 		Set<String> forbiddenSet = new HashSet<>(Arrays.asList(forbiddenWords));
 
 		boolean censored = false;
@@ -161,12 +170,35 @@ public class MostPopularWords {
 		return tokens;
 	}
 
-	private static void writeDataToFile(Map<String, Integer> words, String fileName) {
+	private static void writeDataToFile(String str, String fileName) {
 
+		try (FileWriter out = new FileWriter(fileName, false)) { //zastapi 
+			out.append(str);
+		} catch (IOException ex) {
+			System.out.println("Can't write to the file!");
+			ex.printStackTrace();
+		}
 	}
 
 	private static String readFromFile(String fileName) {
-		return null;
+
+		Path path = Paths.get(fileName); // moze byc Path zamiast File
+		StringBuilder builder = new StringBuilder();
+
+		try (Scanner sc = new Scanner(path)) {
+			while (sc.hasNextLine()) {
+				builder.append(sc.nextLine() + "\n");
+			}
+
+		} catch (FileNotFoundException ex) {
+			System.out.println("the file is unavailable!");
+			ex.printStackTrace();
+		} catch (IOException e) {
+			System.out.println("Can't read from the file!");
+			e.printStackTrace();
+		}
+
+		return builder.toString();
 	}
 
 	private static Map<String, Integer> selectMostPopular(String popularWords, int wordLimit) {
@@ -191,12 +223,36 @@ public class MostPopularWords {
 		Map<String, Integer> sortedMapAsc = sortByComparator(unsortMap, ascending);
 		Set<String> keys = sortedMapAsc.keySet();
 		System.out.printf("%nMost popular words in onet.pl and wp.pl headlines:%nWord\t\t\tFrequency%n");
-		
+
 		int loop = 0;
-		for (String key : keys){
-			if(loop++ >= limit)
+		for (String key : keys) {
+			if (loop++ >= limit)
 				break;
 			System.out.printf("%-20s%12s%n", key, sortedMapAsc.get(key));
+		}
+	}
+
+	private static void writeDataToFile(Map<String, Integer> unsortMap, String fileName, int limit) {
+		
+		boolean ascending = false;
+		Map<String, Integer> sortedMapAsc = sortByComparator(unsortMap, ascending);
+		Set<String> keys = sortedMapAsc.keySet();
+		String header = String.format(("%nMost popular words in onet.pl and wp.pl headlines:%nWord\t\t\tFrequency%n"));
+		String limited = header;
+		
+		try (FileWriter out = new FileWriter(fileName, false)) { // zastapi 
+			
+			int loop = 0;
+			for (String key : keys) {
+				out.append( String.format("%-20s%12s%n", key, sortedMapAsc.get(key)) );
+				
+				if (++loop >= limit)
+					break;
+			}
+			
+		} catch (IOException ex) {
+			System.out.println("Can't write to the file!");
+			ex.printStackTrace();
 		}
 	}
 
