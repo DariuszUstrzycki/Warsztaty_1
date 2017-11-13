@@ -11,12 +11,21 @@ skip (6. Utwórz tablicę elementów wykluczonych np. i, lub , ewentualnie pomi�
 package pl.ustrzycki.mostpopular;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
 
+import org.apache.commons.lang.math.NumberUtils;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -27,34 +36,59 @@ public class MostPopularWords {
 
 	public static void main(String[] args) {
 		// for testing:
-		/*String titles = "Krowa, zjadła; krowa\n"
-		+ " I widziała.go-go \\\"krowa: krowa- i\n"
-		+ "bulion? ,zupa\\\" zupa!";*/
-		
-		
-		//dla https://www.wp.pl/ - <a> wth attribute title?
+		/*
+		 * String titles = "Krowa, zjadła; krowa\n" +
+		 * " I widziała.go-go \\\"krowa: krowa- i\n" +
+		 * "bulion? ,zupa\\\" zupa!";
+		 */
+
+		// dla https://www.wp.pl/ - <a> wth attribute title?
 		String onetHeadlines = getWebpageHeadlines("http://www.onet.pl/", "span.title");
-		String interiaHeadlines = getWebpageHeadlines("http://www.interia.pl/", "li.news-li a.news-a"); 
+		String interiaHeadlines = getWebpageHeadlines("http://www.interia.pl/", "li.news-li a.news-a");
 		String allHeadlines = "ONET: " + onetHeadlines + "\nINTERIA: \n\n" + interiaHeadlines;
-			display(allHeadlines);
-			display("\n AFTER CLEARING !!!\n");
-		String toRemove = " ,;-:\\.!?\"\\\r\\\t";
+		// display(allHeadlines);
+		// display("\n AFTER CLEARING !!!\n");
+		String toRemove = " #|[],;-:\\.!?\"\\\r\\\t///";
 		String clearedHeadlines = removeNonWordChars(allHeadlines, toRemove);
 		display(clearedHeadlines);
+
 		// done --------------------
-		/*Map<String,Integer> words = frequency(clearedTitles);
-			//displayMap(words);
-			//-----------------------------
-		
-		writeDataToFile(words, "popular_words.txt"); 
-		String popularWords = readFromFile("popular_words.txt"); 
-		Map<String,Integer> mostPopularWords = selectMostPopular(popularWords, 10); 
-		writeDataToFile(mostPopularWords, "most_popular_words.txt");
-*/
+		Map<String, Integer> words = frequency(clearedHeadlines);
+		displayMapKeyAscend(words);
+
+		displayMapValueDesc(words);
+		// -----------------------------
+		/*
+		 * writeDataToFile(words, "popular_words.txt"); String popularWords =
+		 * readFromFile("popular_words.txt"); Map<String,Integer>
+		 * mostPopularWords = selectMostPopular(popularWords, 10);
+		 * writeDataToFile(mostPopularWords, "most_popular_words.txt");
+		 */
+	}
+
+	private static boolean censor(String str) {
+
+		str = str.toLowerCase();
+		String[] forbiddenWords = { "się", "czy", "nie", "nas", "onet", "interia" };
+		Set<String> forbiddenSet = new HashSet<>(Arrays.asList(forbiddenWords));
+
+		boolean censored = false;
+
+		if (str.length() < 3)
+			censored = true;
+
+		if (NumberUtils.isDigits(str))
+			censored = true;
+
+		if (forbiddenSet.contains(str))
+			censored = true;
+
+		return censored;
 	}
 
 	/**
 	 * Reads all spans with title class from a webpage
+	 * 
 	 * @return string with collected data
 	 */
 	private static String getWebpageHeadlines(String url, String selection) {
@@ -72,44 +106,57 @@ public class MostPopularWords {
 		}
 		return builder.toString();
 	}
-	
+
 	private static String removeNonWordChars(String raw, String toRemove) {
-		
+
 		boolean keepNewLines = false;
 		StringTokenizer tokenizer;
-		
-		if(keepNewLines)
-			tokenizer = new StringTokenizer(raw, toRemove + "\\\n", false);  // false - dont include delimiters
+
+		if (keepNewLines)
+			tokenizer = new StringTokenizer(raw, toRemove + "\\\n", false); // false
+																			// -
+																			// dont
+																			// include
+																			// delimiters
 		else
-			tokenizer = new StringTokenizer(raw, toRemove, false); 
-		 
+			tokenizer = new StringTokenizer(raw, toRemove, false);
+
 		StringBuilder builder = new StringBuilder();
-		while(tokenizer.hasMoreTokens())
-			builder.append(tokenizer.nextToken().toLowerCase() + " "); //  \\\n - this removes \n !!!
-		
+		while (tokenizer.hasMoreTokens())
+			builder.append(tokenizer.nextToken() + " "); // \\\n - this removes
+															// \n !!!
+
 		return builder.toString();
 	}
-	
-	
+
 	/**
-	 * Tokenizes string on spaces, counts each word's frequency in the string 
-	 * and creates word/frequency map 
+	 * Tokenizes string on spaces, counts each word's frequency in the string
+	 * and creates word/frequency map
 	 */
 	private static Map<String, Integer> frequency(String text) {
-		
+
+		boolean ignoreCase = true;
+
 		Map<String, Integer> tokens = new HashMap<>();
 		StringTokenizer tokenizer = new StringTokenizer(text);
-		
-		while(tokenizer.hasMoreTokens()){
-			String word = tokenizer.nextToken().toLowerCase(); 
-			if(tokens.containsKey(word)){	
+
+		while (tokenizer.hasMoreTokens()) {
+			String word = tokenizer.nextToken();
+
+			if (censor(word)) // to see censored words change to !censor(word
+				continue;
+
+			if (ignoreCase)
+				word = word.toLowerCase();
+
+			if (tokens.containsKey(word)) {
 				int count = tokens.get(word); // get current count
 				tokens.put(word, count + 1); // increment frequency
-			}else{
+			} else {
 				tokens.put(word, 1); // add new word with count 1
 			}
-		}		
-		
+		}
+
 		return tokens;
 	}
 
@@ -124,21 +171,54 @@ public class MostPopularWords {
 	private static Map<String, Integer> selectMostPopular(String popularWords, int wordLimit) {
 		return null;
 	}
-	
-	private static void displayMap(Map<String,Integer> map){
-		
+
+	private static void displayMapKeyAscend(Map<String, Integer> map) {
+
 		Set<String> keys = map.keySet();
-		
+
 		TreeSet<String> sortedKeys = new TreeSet<>(keys); // sort keys
 		System.out.printf("%nMap contains:%nKey\t\t\tValue%n");
-		
-		for(String key : sortedKeys)
+
+		for (String key : sortedKeys)
 			System.out.printf("%-15s%12s%n", key, map.get(key));
-		
+
 	}
-	
-	private static void display(String message){
-		System.out.println(message);		
+
+	private static void displayMapValueDesc(Map<String, Integer> unsortMap) {
+
+		boolean ascending = false;
+		Map<String, Integer> sortedMapAsc = sortByComparator(unsortMap, ascending);
+		Set<String> keys = sortedMapAsc.keySet();
+		System.out.printf("%nMap contains:%nKey\t\t\tValue%n");
+		for (String key : keys)
+			System.out.printf("%-15s%12s%n", key, sortedMapAsc.get(key));
+	}
+
+	private static void display(String message) {
+		System.out.println(message);
+	}
+
+	private static Map<String, Integer> sortByComparator(Map<String, Integer> unsortMap, final boolean order) {
+
+		List<Entry<String, Integer>> list = new LinkedList<Entry<String, Integer>>(unsortMap.entrySet());
+
+		// Sorting the list based on values
+		Collections.sort(list, new Comparator<Entry<String, Integer>>() {
+			public int compare(Entry<String, Integer> o1, Entry<String, Integer> o2) {
+				if (order)
+					return o1.getValue().compareTo(o2.getValue());
+				else
+					return o2.getValue().compareTo(o1.getValue());
+			}
+		});
+
+		// Maintaining insertion order with the help of LinkedList
+		Map<String, Integer> sortedMap = new LinkedHashMap<String, Integer>();
+		for (Entry<String, Integer> entry : list) {
+			sortedMap.put(entry.getKey(), entry.getValue());
+		}
+
+		return sortedMap;
 	}
 
 }
