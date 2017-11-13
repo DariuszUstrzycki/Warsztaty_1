@@ -54,9 +54,9 @@ public class MostPopularWords {
 
 		// done --------------------
 		Map<String, Integer> words = frequency(clearedHeadlines);
-		displayMapKeyAscend(words);
+		//displayMapKeyAscend(words);
 
-		displayMapValueDesc(words);
+		displayMapValueDesc(words, 20);
 		// -----------------------------
 		/*
 		 * writeDataToFile(words, "popular_words.txt"); String popularWords =
@@ -69,7 +69,8 @@ public class MostPopularWords {
 	private static boolean censor(String str) {
 
 		str = str.toLowerCase();
-		String[] forbiddenWords = { "się", "czy", "nie", "nas", "onet", "interia" };
+		String[] forbiddenWords = { "się", "czy", "nie", "nas", "onet", "interia", "jak", "jest", "ponad", "dla", "bez",
+				"dziś", "raz", "dwóch", "trzech", "pod", "może", "nawet", "nad", "będzie"};
 		Set<String> forbiddenSet = new HashSet<>(Arrays.asList(forbiddenWords));
 
 		boolean censored = false;
@@ -177,21 +178,26 @@ public class MostPopularWords {
 		Set<String> keys = map.keySet();
 
 		TreeSet<String> sortedKeys = new TreeSet<>(keys); // sort keys
-		System.out.printf("%nMap contains:%nKey\t\t\tValue%n");
+		System.out.printf("%nMost popular words in onet.pl and wp.pl headlines:%nWord\t\t\tFrequency%n");
 
 		for (String key : sortedKeys)
-			System.out.printf("%-15s%12s%n", key, map.get(key));
+			System.out.printf("%-20s%12s%n", key, map.get(key));
 
 	}
 
-	private static void displayMapValueDesc(Map<String, Integer> unsortMap) {
+	private static void displayMapValueDesc(Map<String, Integer> unsortMap, int limit) {
 
 		boolean ascending = false;
 		Map<String, Integer> sortedMapAsc = sortByComparator(unsortMap, ascending);
 		Set<String> keys = sortedMapAsc.keySet();
-		System.out.printf("%nMap contains:%nKey\t\t\tValue%n");
-		for (String key : keys)
-			System.out.printf("%-15s%12s%n", key, sortedMapAsc.get(key));
+		System.out.printf("%nMost popular words in onet.pl and wp.pl headlines:%nWord\t\t\tFrequency%n");
+		
+		int loop = 0;
+		for (String key : keys){
+			if(loop++ >= limit)
+				break;
+			System.out.printf("%-20s%12s%n", key, sortedMapAsc.get(key));
+		}
 	}
 
 	private static void display(String message) {
